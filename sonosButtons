@@ -1,0 +1,229 @@
+/*
+
+
+ */
+metadata
+{
+    definition(name: "Sonos Buttons", namespace: "tomw", author: "tomw", importUrl: "")
+    {
+        capability "Configuration"
+        capability "PushableButton"
+        capability "Refresh"
+        command "push", ["number"]
+        
+        command "addButton", ["number", "command"]
+        command "deleteButton", ["number"]
+        command "clearButtons"
+        
+        command "join", ["master"]
+        command "leave"
+        
+        attribute "albumArtUri", "string"
+        attribute "albumArtDisplay", "string"
+    }
+}
+
+preferences
+{
+    section
+    {
+        input "sonosName", "text", title: "Speaker name", required: true
+        input "sonosIP", "text", title: "Speaker IP", required: true
+        input "nodeIP", "text", title: "node-sonos-http-api server IP", required: true
+        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
+    }
+}
+
+def logDebug(msg) 
+{
+    if (logEnable)
+    {
+        log.debug(msg)
+    }
+}
+
+def updated()
+{
+    configure()
+}
+
+def configure()
+{
+    state.clear
+    clearButtons()
+}
+
+def refresh()
+{
+    if(parent)
+    {
+        parent.refresh()
+    }
+}
+
+def refresh(zonesResp)
+{
+    def art = findArtByName(zonesResp)
+    sendEvent(name: "albumArtUri", value: art ? art : "unknown")
+    sendEvent(name: "albumArtDisplay", value: art ? "<img src=\"${art}\">" : "unknown")    
+}
+
+def refreshFromParent(zonesResp)
+{
+    refresh(zonesResp)
+}
+
+def setupFromParent(configInfo)
+{
+    device.updateSetting("sonosName", configInfo.sonosName.toString())
+    device.updateSetting("sonosIP", configInfo.sonosIP.toString())
+    device.updateSetting("nodeIP", configInfo.nodeIP.toString())
+    
+    configure()
+}
+
+def push()
+{
+    // do nothing
+}
+
+def push(buttonNumber)
+{    
+    logDebug("Http GET Button: push(${buttonNumber})")
+    sendEvent(name: "pushed", value: buttonNumber, isStateChange: true)
+    
+    def command = ""
+    if(state.buttonMap.containsKey(buttonNumber.toString()))
+    {
+        // use user-defined button, if it exists
+        command = state.buttonMap[buttonNumber.toString()]
+    }
+    else
+    {
+        // enter pre-defined buttons here,
+        //   if they're not defined by the user
+        switch(buttonNumber)
+        {
+            case 1:
+                command = "pause"
+                break
+            case 2:
+                command = "play"
+                break
+            case 3:
+                join("Kitchen")
+                break
+            case 4:
+                leave()
+                break
+        }
+    }
+    
+    if("" != command)
+    {
+        httpGetExec(nodeIP, "${sonosName}/${command}", 5005)
+    }
+    else
+    {
+        logDebug("unknown button command")
+    }
+}
+
+def addButton(number, command)
+{
+    if(!number.toString().isInteger())
+    {
+        log.debug "addButton() failed: number must be integer"
+        return
+    }
+    
+    state.buttonMap[number] = command    
+}
+
+def deleteButton(number)
+{
+    state.buttonMap.remove(number.toString())
+}
+
+def clearButtons()
+{
+    state.buttonMap = [:]
+}
+
+def join(master)
+{
+    httpGetExec(nodeIP, "${sonosName}/join/${master}", 5005)    
+}
+
+def leave()
+{
+    httpGetExec(nodeIP, "${sonosName}/leave", 5005)    
+}
+
+def findArtByName(zonesResp)
+{
+    if(!zonesResp)
+    {
+        return
+    }
+
+    for(zone in zonesResp)
+    {
+        // look at top level first...
+        if(sonosName == zone?.coordinator?.roomName)
+        {
+            // assume that all members have the same art, so just take the first one
+            return fixupUri(zone?.members[0]?.state?.currentTrack?.absoluteAlbumArtUri)
+        }
+        
+        // ...look within zone if not found
+        for(member in zone?.members)
+        {
+            if(sonosName == member?.roomName)
+            {
+                return fixupUri(member?.state?.currentTrack?.absoluteAlbumArtUri)
+            }
+        }                
+    }
+    
+    // return null if we didn't find it
+    return
+}
+
+def fixupUri(origUri)
+{
+    // for internal library files, check for and prepend absolute path
+    return (!origUri ? null : (origUri.contains("http") ? origUri : "http://${sonosIP}:1400${origUri}"))
+}
+
+def getBaseURI(ipAddr, port = null)
+{
+    def newURI = "http://" + ipAddr
+        
+    return newURI + (port ? ":${port}/" : "/")
+}
+
+def httpGetExec(ipAddr, suffix, port = null)
+{
+    logDebug("httpGetExec(${ipAddr}, ${suffix}, ${port})")
+    
+    try
+    {
+        getString = getBaseURI(ipAddr, port) + suffix
+        def result
+        httpGet(getString.replaceAll(' ', '%20'))
+        { resp ->
+            if (resp.data)
+            {
+                logDebug("resp.data = ${resp.data}")
+                result = resp.data
+            }
+        }
+        
+        return result
+    }
+    catch (Exception e)
+    {
+        logDebug("httpGetExec() failed: ${e.message}")
+    }
+}
