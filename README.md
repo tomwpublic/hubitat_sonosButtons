@@ -11,6 +11,8 @@ This library is intended as a companion to the built-in Sonos integration and ca
 * Install the node-sonos-http-api on your external server of choice and ensure that it is working correctly: https://github.com/jishi/node-sonos-http-api/blob/master/README.md
 * In the *Drivers Code* section of Hubitat, add the sonosButtonsSystem and sonosButtons drivers.
 * In the *Devices* section of Hubitat, *Add Virtual Device* of type Sonos Buttons System.  Enter the IP and MAC addresses of your **node server** (note: this is not the same as any of the Sonos speakers) and click *Save Preferences.*
+* If you want real-time updates (without polling), set up the webhook functionality as described in the node-sonos-http-api readme.  Set the webhook entry in your settings.json as `{ "webhook" : "http://<your hub IP>:39501" }`
+    * Otherwise, you can poll for updates by executing the Refresh command on the Sonos Buttons System device.
 * Add Sonos Buttons devices using the *addChildSpeaker* command for any speakers that you want to control.
 
 # Usage instructions:
