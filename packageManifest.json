@@ -1,0 +1,27 @@
+{
+  "packageName": "hubitat_sonosButtons",
+  "author": "tomw",
+  "version": "1.0.0",
+  "minimumHEVersion": "2.1.9",
+  "dateReleased": "2021-01-17,
+  "drivers": [
+    {
+      "id": "8996100e-5bce-482d-9360-6737352dde86",
+      "name": "Sonos Buttons System",
+      "namespace": "tomw",
+      "location": "https://raw.githubusercontent.com/tomwpublic/hubitat_sonosButtons/main/sonosButtonsSystem",
+      "required": true
+    },
+    {
+      "id": "8994e369-19a5-4e48-97cc-05f8cad9b293",
+      "name": "Bose SoundTouch Device",
+      "namespace": "tomw",
+      "location": "https://raw.githubusercontent.com/tomwpublic/hubitat_sonosButtons/main/sonosButtons",
+      "required": true
+    }
+  ],
+  "licenseFile": "https://raw.githubusercontent.com/tomwpublic/hubitat_sonosButtons/main/LICENSE",
+  "releaseNotes": "1.0.0 - @tomw - Initial release.",
+  "documentationLink": "https://github.com/tomwpublic/hubitat_sonosButtons/blob/main/README.md",
+  "communityLink": "https://community.hubitat.com/u/tomw/summary"
+}
