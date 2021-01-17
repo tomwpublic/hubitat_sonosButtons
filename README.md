@@ -24,7 +24,7 @@ This library is intended as a companion to the built-in Sonos integration and ca
 
 * ***Push* operations**
 
-    * Numbered buttons save HTTP queries and are executed when pressed by number.  See below for instructions on creating custom commands.  Saved commands appear in the *buttonMap* entry on the device page.
+    * Numbered buttons are mapped to saved HTTP commands to the node server and are executed when pressed.  See below for instructions on creating custom commands.  Saved commands appear in the *buttonMap* entry on the device page.
     * The sonosButtons driver code also demonstrates how to enter default behaviors at the driver source code level for numbered buttons that do not have a custom command associated.  Inspect the *push(buttonNumber)* command for examples.
 
 * **Creating custom button commands**
