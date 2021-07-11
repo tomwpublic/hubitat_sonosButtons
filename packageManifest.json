@@ -14,7 +14,7 @@
     },
     {
       "id": "8994e369-19a5-4e48-97cc-05f8cad9b293",
-      "name": "Bose SoundTouch Device",
+      "name": "Sonos Buttons",
       "namespace": "tomw",
       "location": "https://raw.githubusercontent.com/tomwpublic/hubitat_sonosButtons/main/sonosButtons",
       "required": true
