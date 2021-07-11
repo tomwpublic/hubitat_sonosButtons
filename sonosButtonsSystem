@@ -18,6 +18,7 @@ limitations under the License.
 
 Change history:
 
+1.1.0 - @tomw - Improved usability by supporting IP for DNI when necessary
 1.0.0 - @tomw - Initial release
 
 */
@@ -38,7 +39,7 @@ preferences
     section
     {
         input "nodeIP", "text", title: "node-sonos-http-api server IP", required: true
-        input "nodeMAC", "text", title: "node-sonos-http-api server MAC", required: true
+        input "nodeMAC", "text", title: "node-sonos-http-api server MAC (leave blank if on different VLAN than Hubitat)", required: false
         input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
     }
 }
@@ -53,7 +54,13 @@ def logDebug(msg)
 
 def updated()
 {
-    device.setDeviceNetworkId(nodeMAC.replace(":", "").toUpperCase())
+    def dni = determineDni()
+    
+    if(dni)
+    {
+        device.setDeviceNetworkId(dni)
+    }
+    
     refresh()
 }
 
@@ -141,3 +148,82 @@ def httpGetExec(ipAddr, suffix, port = null)
         logDebug("httpGetExec() failed: ${e.message}")
     }
 }
+
+
+// various utility functions
+        
+def determineDni()
+{
+    if(cleanupMac(nodeMAC))
+    {
+        return cleanupMac(nodeMAC)
+    }
+    
+    if(convertIPtoHex(nodeMAC))
+    {
+        // try to use nodeMAC input as IP, just in case the user entered an IP there
+        return convertIPtoHex(nodeMAC)
+    }
+    
+    // if we got this far, it means MAC and/or IP are missing from nodeMAC
+    // ...so, try to use the other IP input
+    
+    if(convertIPtoHex(nodeIP))
+    {
+        return convertIPtoHex(nodeIP)
+    }
+    
+    return null
+}
+        
+
+def convertIPtoHex(ipAddress)
+{
+    logDebug("${ipAddress}")
+    try
+    {
+        def split = ipAddress.tokenize('.')
+        if(4 == split?.size())
+        {
+            // we have what looks like an IP address
+            return split.collect{ String.format('%02x', it.toInteger()) }?.join()?.toUpperCase()
+        }
+    }
+    catch(e)
+    {
+        return null
+    }
+}
+
+def cleanupMac(macAddress)
+{
+    logDebug("${macAddress}")
+    try
+    {
+        def split = macAddress.tokenize(':')
+        
+        if(6 == split?.size())
+        {
+            // we have what looks like a MAC address
+            return split.collect{ it }?.join()?.toUpperCase()
+        }
+        
+        if(1 == split?.size())
+        {
+            // this *might* be a MAC address, so try to verify
+            split = split.collect{ it }?.join()?.toUpperCase()
+            
+            if(split.matches("-?[0-9a-fA-F]+"))
+            {
+                return split
+            }
+            
+            return null
+        }
+    }
+    catch(e)
+    {
+        return null
+    }
+}
+
