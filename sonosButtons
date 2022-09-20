@@ -18,7 +18,7 @@ limitations under the License.
 
 Change history:
 
-1.0.1 - tomw - Bugfix for data format differences in newer node-sonos-http-api versions
+1.1.1 - tomw - Bugfix for data format differences in newer node-sonos-http-api versions
 1.0.0 - tomw - Initial release
 
 */
