@@ -18,7 +18,8 @@ limitations under the License.
 
 Change history:
 
-1.0.0 - @tomw - Initial release
+1.0.1 - tomw - Bugfix for data format differences in newer node-sonos-http-api versions
+1.0.0 - tomw - Initial release
 
 */
 
@@ -192,8 +193,10 @@ def findArtByName(zonesResp)
         // look at top level first...
         if(sonosName == zone?.coordinator?.roomName)
         {
+            track = zone?.members[0]?.state?.currentTrack
+            theURI = track?.absoluteAlbumArtUri ?: track?.absoluteAlbumArtURI
             // assume that all members have the same art, so just take the first one
-            return fixupUri(zone?.members[0]?.state?.currentTrack?.absoluteAlbumArtUri)
+            return fixupUri(theURI)
         }
         
         // ...look within zone if not found
@@ -201,7 +204,9 @@ def findArtByName(zonesResp)
         {
             if(sonosName == member?.roomName)
             {
-                return fixupUri(member?.state?.currentTrack?.absoluteAlbumArtUri)
+                track = member?.state?.currentTrack
+                theURI = track?.absoluteAlbumArtUri ?: track?.absoluteAlbumArtURI
+                return fixupUri(theURI)
             }
         }                
     }
